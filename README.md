@@ -2,6 +2,6 @@
 
 다음 명령어로 컴파일 할 수 있습니다.
 ```
-gcc -o arp_spoofing arp_spoofing.c -lpcap
+g++ -o arp_spoofing arp_spoofing.cpp -lpcap
 ```
 
