@@ -3,12 +3,13 @@
 #include <cstring>
 #include<stdlib.h>
 #include <net/ethernet.h>
+#include <signal.h>
 
 typedef unsigned char u_char;
 
 const u_char HACKER_MAC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //hacker mac address
 const u_char GATEWAY_MAC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //gateway mac address
-const u_char VICTIM_MAC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //38:f9:d3:71:e4:3f 
+const u_char VICTIM_MAC[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; //victim mac address
 
 
 const char TARGET_DEV_NAME[5] = "en0";
@@ -16,8 +17,10 @@ const char VICTIM_IP_FILTER[] = "host 172.20.10.3"; // private ip address
 pcap_t *handle;
 
 void pkt_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
+void sig_handler(int sig);
 
-int main() {
+int main()
+{
     // arp 감염이 되어있다고 가정
     // 패킷을 받은 것을 relay해주는 기능 먼저 개발
 
@@ -75,13 +78,19 @@ int main() {
         return 2;
     }
 
+    // sig handler 등록
+    signal(SIGINT, sig_handler);
+
+    // handler 등록하고 패킷 캡쳐 시작
     pcap_loop(handle, total_packet_count, pkt_handler, NULL);
+    printf("loop??\n");
     pcap_close(handle);
 
 }
 
 // handle event when packet sent by victim is captured
-void pkt_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet) {
+void pkt_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
+{
     struct ether_header *eth_header;
     eth_header = (struct ether_header *) packet;
     if(ntohs(eth_header->ether_type) != ETHERTYPE_IP) {
@@ -156,4 +165,12 @@ void pkt_handler(u_char *args, const struct pcap_pkthdr *header, const u_char *p
 
     }
 
+}
+
+// sigint시 종료해야 하는 작업들 처리
+void sig_handler(int sig)
+{
+    printf("good bye..\n");
+    pcap_close(handle);
+    exit(0);
 }
